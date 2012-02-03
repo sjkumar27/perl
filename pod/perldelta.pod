@@ -89,6 +89,11 @@ cribbed.
 
 XXX
 
+=item *
+
+L<IO::Socket::IP>, a drop-in replacement for L<IO::Socket::INET> that
+supports both C<IPv4> and C<IPv6>, has been added as a dual-life module.
+
 =back
 
 =head2 Updated Modules and Pragmata
