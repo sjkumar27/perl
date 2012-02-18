@@ -103,6 +103,10 @@ L<XXX> has been upgraded from version 0.69 to version 0.70.
 
 L<Compress::Raw::Bzip2> has been upgraded from version 2.045 to version 2.049.
 
+=item *
+
+L<Compress::Zlib> has been upgraded from version 2.046 to version 2.049.
+
 =back
 
 =head2 Removed Modules and Pragmata
