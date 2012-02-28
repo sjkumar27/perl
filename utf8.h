@@ -144,7 +144,8 @@ Perl's extended UTF-8 means we can have start bytes up to FF.
 #define UTF8_IS_START(c)		(((U8)c) >= 0xc0)
 #define UTF8_IS_CONTINUATION(c)		(((U8)c) >= 0x80 && (((U8)c) <= 0xbf))
 #define UTF8_IS_CONTINUED(c) 		(((U8)c) &  0x80)
-#define UTF8_IS_DOWNGRADEABLE_START(c)	(((U8)c & 0xfc) == 0xc0)
+#define UTF8_IS_DOWNGRADEABLE_START(c)  (((U8)c) >= 0xc2 && (((U8)c) <= 0xc3))
+
 
 #define UTF_START_MARK(len) (((len) >  7) ? 0xFF : (0xFE << (7-(len))))
 #define UTF_START_MASK(len) (((len) >= 7) ? 0x00 : (0x1F >> ((len)-2)))
