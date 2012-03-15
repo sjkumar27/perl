@@ -7584,6 +7584,41 @@ S_sv_gets_read_record(pTHX_ SV *const sv, PerlIO *const fp, I32 append)
 
     if (bytesread < 0)
 	bytesread = 0;
+    else if (PerlIO_isutf8(fp)
+	     && bytesread > 0
+	     && ! UTF8_IS_INVARIANT(buffer[bytesread-1]))
+    {
+
+	/* When reading a fixed-length from a variable-length encoding, we
+	 * could end up with a partial character.  That won't happen with a
+	 * character that's invariant under UTF-8, which we've excluded above.
+	 * So, here we have the first byte of a multi-byte character, or a
+	 * continuation byte of one.  If the latter, look backwards in the
+	 * input looking for its start byte. */
+	int i = bytesread - 1;
+	if (UTF8_IS_CONTINUATION(buffer[i])) {
+	    for (; i >= 0; i--) {
+		if (! UTF8_IS_CONTINUATION(buffer[i])) {
+		    break;
+		}
+	    }
+	}
+
+	/* Here, buffer[i] is the supposed start byte of the multi-byte
+	 * character.  If the start byte indicates we should have more bytes
+	 * than were read, is a problem unless a higher level protocol
+	 * intervenes to concatenate this with the next read.  If instead we
+	 * found a continuation byte, something is badly wrong, and we could
+	 * print out a malformed message, but for now, just use a single
+	 * message for both errors. */
+	if (UTF8_IS_CONTINUATION(buffer[i]) ||
+	    UTF8SKIP(&(buffer[i])) + i != bytesread)
+	{
+	    Perl_ck_warner_d(aTHX_ packWARN(WARN_UTF8),
+	       "Using a fixed-length record size read on a variable-length encoded file has led to returning a partial character");
+	}
+    }
+
     SvCUR_set(sv, bytesread + append);
     buffer[bytesread] = '\0';
     return (SvCUR(sv) - append) ? SvPVX(sv) : NULL;
