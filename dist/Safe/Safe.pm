@@ -140,6 +140,9 @@ my $default_share = [qw[
     &Tie::Hash::NamedCapture::SCALAR
     &Tie::Hash::NamedCapture::flags
 ])];
+if (defined $Devel::Cover::VERSION) {
+    push @$default_share, '&Devel::Cover::use_file';
+}
 
 sub new {
     my($class, $root, $mask) = @_;
