@@ -18,9 +18,13 @@ BEGIN {
 use strict;
 use Test::More;
 use Safe;
-plan(tests => 1);
+plan(tests => 2);
 
 my $c = new Safe;
 $c->permit(qw(require caller entereval unpack));
 my $r = $c->reval(q{ use version; 1 });
 ok( defined $r, "Can load version.pm in a Safe compartment" ) or diag $@;
+
+$r = $c->reval(q{ version->new(1.2) });
+is(ref $r, "Safe::Root0::version", "version objects rerooted");
+$r or diag $@;
