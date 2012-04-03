@@ -9,6 +9,7 @@ t/safe3.t
 t/safeload.t
 t/safenamedcap.t
 t/safeops.t
+t/saferegexp.t
 t/safesort.t
 t/safeuniversal.t
 t/safeutf8.t
