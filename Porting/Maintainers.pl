@@ -34,6 +34,7 @@ use File::Glob qw(:case);
     'gbarr'     => 'Graham Barr <gbarr@cpan.org>',
     'gaas'      => 'Gisle Aas <gaas@cpan.org>',
     'gsar'      => 'Gurusamy Sarathy <gsar@activestate.com>',
+    'hmbrand'   => 'H.Merijn Brand <h.m.brand@xs4all.nl>',
     'ilyam'     => 'Ilya Martynov <ilyam@cpan.org>',
     'ilyaz'     => 'Ilya Zakharevich <ilyaz@cpan.org>',
     'jand'      => 'Jan Dubois <jand@activestate.com>',
@@ -383,6 +384,19 @@ use File::Glob qw(:case);
             qr{^t/Test/},
             qw( t/000prereq.t
                 t/99pod.t
+                ),
+        ],
+        'UPSTREAM' => 'cpan',
+    },
+
+    'Config::Perl::V' => {
+        'MAINTAINER'   => 'hmbrand',
+        'DISTRIBUTION' => 'HMBRAND/Config-Perl-V-0.15.tgz',
+        'FILES'        => q[cpan/Config-Perl-V],
+        'EXCLUDED'     => [
+            qr{^examples/},
+            qw( t/00_pod.t
+                t/01_pod.t
                 ),
         ],
         'UPSTREAM' => 'cpan',

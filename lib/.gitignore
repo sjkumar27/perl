@@ -9,6 +9,7 @@
 /B.pm
 /CGI
 /CGI.pm
+/Config
 /CPAN
 /CPAN.pm
 /CPAN/API
