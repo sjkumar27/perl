@@ -8217,6 +8217,7 @@ Perl_yylex(pTHX)
 		d = s;
 		s = SKIPSPACE2(s,tmpwhite);
 #else
+		d = s;
 		s = skipspace(s);
 #endif
 
@@ -8261,8 +8262,13 @@ Perl_yylex(pTHX)
 #endif
 		}
 		else {
-		    if (key == KEY_my)
-			Perl_croak(aTHX_ "Missing name in \"my sub\"");
+		    if (key == KEY_my || key == KEY_our || key==KEY_state)
+		    {
+			*d = '\0';
+			/* diag_listed_as: Missing name in "%s sub" */
+			Perl_croak(aTHX_
+				  "Missing name in \"%s\"", PL_bufptr);
+		    }
 		    PL_expect = XTERMBLOCK;
 		    attrful = XATTRTERM;
 		    sv_setpvs(PL_subname,"?");
