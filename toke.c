@@ -66,7 +66,6 @@ Individual members of C<PL_parser> have their own documentation.
 #define PL_multi_start		(PL_parser->multi_start)
 #define PL_multi_open		(PL_parser->multi_open)
 #define PL_multi_close		(PL_parser->multi_close)
-#define PL_pending_ident        (PL_parser->pending_ident)
 #define PL_preambled		(PL_parser->preambled)
 #define PL_sublex_info		(PL_parser->sublex_info)
 #define PL_linestr		(PL_parser->linestr)
@@ -111,10 +110,8 @@ Individual members of C<PL_parser> have their own documentation.
 #  define PL_nextval		(PL_parser->nextval)
 #endif
 
-/* This can't be done with embed.fnc, because struct yy_parser contains a
-   member named pending_ident, which clashes with the generated #define  */
-static int
-S_pending_ident(pTHX);
+#define force_ident_maybe_lex(p) \
+	(PL_bufptr = s, S_force_ident_maybe_lex(aTHX_ p))
 
 static const char ident_too_long[] = "Identifier too long";
 
@@ -4183,10 +4180,6 @@ Perl_madlex(pTHX)
     PL_thiswhite = 0;
     PL_thismad = 0;
 
-    /* just do what yylex would do on pending identifier; leave PL_thiswhite alone */
-    if (PL_lex_state != LEX_KNOWNEXT && PL_pending_ident)
-        return S_pending_ident(aTHX);
-
     /* previous token ate up our whitespace? */
     if (!PL_lasttoke && PL_nextwhite) {
 	PL_thiswhite = PL_nextwhite;
@@ -4451,11 +4444,6 @@ Perl_yylex(pTHX)
 	    pv_display(tmp, s, strlen(s), 0, 60));
 	SvREFCNT_dec(tmp);
     } );
-    /* check if there's an identifier for us to look at */
-    if (PL_lex_state != LEX_KNOWNEXT && PL_pending_ident)
-        return REPORT(S_pending_ident(aTHX));
-
-    /* no identifier pending identification */
 
     switch (PL_lex_state) {
 #ifdef COMMENTARY
@@ -5503,7 +5491,8 @@ Perl_yylex(pTHX)
 	if (!PL_tokenbuf[1]) {
 	    PREREF('%');
 	}
-	PL_pending_ident = '%';
+	PL_expect = XOPERATOR;
+	force_ident_maybe_lex('%');
 	TERM('%');
 
     case '^':
@@ -5995,7 +5984,7 @@ Perl_yylex(pTHX)
 		       sizeof PL_tokenbuf - 1, TRUE);
 	if (PL_tokenbuf[1]) {
 	    PL_expect = XOPERATOR;
-	    PL_pending_ident = '&';
+	    force_ident_maybe_lex('&');
 	}
 	else
 	    PREREF('&');
@@ -6231,7 +6220,7 @@ Perl_yylex(pTHX)
 	    if (!PL_tokenbuf[1])
 		PREREF(DOLSHARP);
 	    PL_expect = XOPERATOR;
-	    PL_pending_ident = '#';
+	    force_ident_maybe_lex('#');
 	    TOKEN(DOLSHARP);
 	}
 
@@ -6349,7 +6338,7 @@ Perl_yylex(pTHX)
 		    PL_expect = XTERM;		/* print $fh <<"EOF" */
 	    }
 	}
-	PL_pending_ident = '$';
+	force_ident_maybe_lex('$');
 	TOKEN('$');
 
     case '@':
@@ -6386,7 +6375,8 @@ Perl_yylex(pTHX)
 		}
 	    }
 	}
-	PL_pending_ident = '@';
+	PL_expect = XOPERATOR;
+	force_ident_maybe_lex('@');
 	TERM('@');
 
      case '/':			/* may be division, defined-or, or pattern */
@@ -7432,7 +7422,7 @@ Perl_yylex(pTHX)
 		if (len && !keyword(PL_tokenbuf + 1, len, 0)) {
 		    d = SKIPSPACE1(d);
 		    if (*d == '(') {
-			PL_pending_ident = '&';
+			force_ident_maybe_lex('&');
 			s = d;
 		    }
 		}
@@ -8255,14 +8245,21 @@ Perl_yylex(pTHX)
                         SvUTF8_on(PL_subname);
 		    have_name = TRUE;
 
+		    if (key == KEY_our) {
+			*PL_tokenbuf = '&';
+			Copy(tmpbuf, PL_tokenbuf+1, len, char);
+			PL_tokenbuf[len+1] = '\0';
+		    }
+
 #ifdef PERL_MAD
-		    if (key != KEY_our) {
-			start_force(0);
-			CURMAD('X', nametoke);
-			CURMAD('_', tmpwhite);
+		    start_force(0);
+		    CURMAD('X', nametoke);
+		    CURMAD('_', tmpwhite);
+		    if (key == KEY_our)
+			force_ident_maybe_lex('&');
+		    else
 			(void) force_word(PL_oldbufptr + tboffset, WORD,
 				      FALSE, TRUE, TRUE);
-		    }
 
 		    s = SKIPSPACE2(d,tmpwhite);
 #else
@@ -8425,9 +8422,7 @@ Perl_yylex(pTHX)
 		    TOKEN(ANONSUB);
 		}
 		if (key == KEY_our) {
-		    PL_pending_ident = *PL_tokenbuf = '&';
-		    Copy(tmpbuf, PL_tokenbuf+1, len, char);
-		    PL_tokenbuf[len+1] = '\0';
+		    force_ident_maybe_lex('&');
 		}
 #ifndef PERL_MAD
 		else
@@ -8596,21 +8591,18 @@ Perl_yylex(pTHX)
 #pragma segment Main
 #endif
 
-static int
-S_pending_ident(pTHX)
+static void
+S_force_ident_maybe_lex(pTHX_ char pit)
 {
     dVAR;
+    OP *o;
+    int force_type;
     PADOFFSET tmp = 0;
-    /* pit holds the identifier we read and pending_ident is reset */
-    char pit = PL_pending_ident;
     const STRLEN tokenbuf_len = strlen(PL_tokenbuf);
     /* All routes through this function want to know if there is a colon.  */
     const char *const has_colon = (const char*) memchr (PL_tokenbuf, ':', tokenbuf_len);
-    PL_pending_ident = 0;
 
-    /* PL_realtokenstart = realtokenend = PL_bufptr - SvPVX(PL_linestr); */
-    DEBUG_T({ PerlIO_printf(Perl_debug_log,
-          "### Pending identifier '%s'\n", PL_tokenbuf); });
+    start_force(PL_curforce);
 
     /* if we're in a my(), we can't allow dynamics here.
        $foo'bar has already been turned into $foo::bar, so
@@ -8632,10 +8624,11 @@ S_pending_ident(pTHX)
 			    PL_in_my == KEY_my ? "my" : "state", PL_tokenbuf),
                             UTF ? SVf_UTF8 : 0);
 
-            pl_yylval.opval = newOP(OP_PADANY, 0);
-            pl_yylval.opval->op_targ = allocmy(PL_tokenbuf, tokenbuf_len,
+            o = newOP(OP_PADANY, 0);
+            o->op_targ = allocmy(PL_tokenbuf, tokenbuf_len,
                                                         UTF ? SVf_UTF8 : 0);
-            return PRIVATEREF;
+            force_type = PRIVATEREF;
+            goto doforce;
         }
     }
 
@@ -8656,8 +8649,8 @@ S_pending_ident(pTHX)
 		SV *  const sym = newSVhek(stashname);
                 sv_catpvs(sym, "::");
                 sv_catpvn_flags(sym, PL_tokenbuf+1, tokenbuf_len - 1, (UTF ? SV_CATUTF8 : SV_CATBYTES ));
-                pl_yylval.opval = (OP*)newSVOP(OP_CONST, 0, sym);
-                pl_yylval.opval->op_private = OPpCONST_ENTERED;
+                o = (OP*)newSVOP(OP_CONST, 0, sym);
+                o->op_private = OPpCONST_ENTERED;
                 gv_fetchsv(sym,
                     (PL_in_eval
                         ? (GV_ADDMULTI | GV_ADDINEVAL)
@@ -8667,12 +8660,14 @@ S_pending_ident(pTHX)
                      : (PL_tokenbuf[0] == '@') ? SVt_PVAV
                      : (PL_tokenbuf[0] == '&') ? SVt_PVGV
                      : SVt_PVHV));
-                return WORD;
+                force_type = WORD;
+                goto doforce;
             }
 
-            pl_yylval.opval = newOP(OP_PADANY, 0);
-            pl_yylval.opval->op_targ = tmp;
-            return PRIVATEREF;
+            o = newOP(OP_PADANY, 0);
+            o->op_targ = tmp;
+            force_type = PRIVATEREF;
+            goto doforce;
         }
     }
 
@@ -8700,10 +8695,10 @@ S_pending_ident(pTHX)
     }
 
     /* build ops for a bareword */
-    pl_yylval.opval = (OP*)newSVOP(OP_CONST, 0, newSVpvn_flags(PL_tokenbuf + 1,
+    o = (OP*)newSVOP(OP_CONST, 0, newSVpvn_flags(PL_tokenbuf + 1,
 						      tokenbuf_len - 1,
                                                       UTF ? SVf_UTF8 : 0 ));
-    pl_yylval.opval->op_private = OPpCONST_ENTERED;
+    o->op_private = OPpCONST_ENTERED;
     gv_fetchpvn_flags(PL_tokenbuf+1, tokenbuf_len - 1,
 		     (PL_in_eval ? (GV_ADDMULTI | GV_ADDINEVAL) : GV_ADD)
                      | ( UTF ? SVf_UTF8 : 0 ),
@@ -8711,7 +8706,11 @@ S_pending_ident(pTHX)
 		      : (PL_tokenbuf[0] == '@') ? SVt_PVAV
 		      : (PL_tokenbuf[0] == '&') ? SVt_PVGV
 		      : SVt_PVHV));
-    return WORD;
+    force_type = WORD;
+
+   doforce:
+    NEXTVAL_NEXTTOKE.opval = o;
+    force_next(force_type);
 }
 
 STATIC void
