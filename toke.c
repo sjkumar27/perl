@@ -9118,7 +9118,8 @@ S_scan_pat(pTHX_ char *start, I32 type)
 {
     dVAR;
     PMOP *pm;
-    char *s = scan_str(start,!!PL_madskills,FALSE, PL_reg_state.re_reparsing);
+  /*char *s = scan_str(start,!!PL_madskills,FALSE, PL_reg_state.re_reparsing);*/
+    char *s = scan_str(start,2,             FALSE, PL_reg_state.re_reparsing);
     const char * const valid_flags =
 	(const char *)((type == OP_QR) ? QR_PAT_MODS : M_PAT_MODS);
     char charset = '\0';    /* character set modifier */
@@ -9938,6 +9939,10 @@ S_scan_str(pTHX_ char *start, int keep_quoted, int keep_delims, int re_reparse)
 	termcode = termstr[0] = term = tmps[5];
 
     PL_multi_close = term;
+
+    if (keep_quoted == 2 && PL_multi_open == PL_multi_close) {
+        keep_quoted = !!PL_madskills;
+    }
 
     /* create a new SV to hold the contents.  79 is the SV's initial length.
        What a random number. */
