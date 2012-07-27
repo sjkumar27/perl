@@ -151,6 +151,11 @@ PP(pp_padcv)
     RETURN;
 }
 
+PP(pp_introcv)
+{
+    DIE(aTHX_ "panic: introcv");
+}
+
 /* Translations. */
 
 static const char S_no_symref_sv[] =
