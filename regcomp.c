@@ -4181,6 +4181,8 @@ S_study_chunk(pTHX_ RExC_state_t *pRExC_state, regnode **scanp,
 		/* Some of the logic below assumes that switching
 		   locale on will only add false positives. */
 		switch (PL_regkind[OP(scan)]) {
+                    int classnum;
+                    regex_charset charset;
 		case SANY:
 		default:
 		  do_default:
@@ -4207,6 +4209,116 @@ S_study_chunk(pTHX_ RExC_state_t *pRExC_state, regnode **scanp,
 			cl_or(pRExC_state, data->start_class,
 			      (struct regnode_charclass_class*)scan);
 		    break;
+
+		case POSIXD:
+                    classnum = FLAGS(scan);
+
+                join_posix:
+                    charset = (regex_charset) (OP(scan) - PL_regkind[OP(scan)]);
+
+		    if (flags & SCF_DO_STCLASS_AND) {
+			if (!(data->start_class->flags & ANYOF_LOCALE)) {
+			    ANYOF_CLASS_CLEAR(data->start_class,ANYOF_NALNUM);
+                            if (charset == REGEX_UNICODE_CHARSET) {
+                                for (value = 0; value < 256; value++) {
+                                    if (! _generic_isCC(value, classnum)) {
+                                        ANYOF_BITMAP_CLEAR(data->start_class,
+                                                           value);
+                                    }
+                                }
+                            } else {
+                                for (value = 0; value < 128; value++) {
+                                    if (! _generic_isCC_A(UNI_TO_NATIVE(value),
+                                                                     classnum))
+                                    {
+                                        ANYOF_BITMAP_CLEAR(data->start_class,
+                                                           value);
+                                    }
+                                }
+                            }
+			}
+		    }
+		    else {
+			if (data->start_class->flags & ANYOF_LOCALE)
+			    ANYOF_CLASS_SET(data->start_class,ANYOF_ALNUM);
+
+			/* Even if under locale, set the bits for non-locale
+			 * in case it isn't a true locale-node.  This will
+			 * create false positives if it truly is locale */
+                        if (charset == REGEX_UNICODE_CHARSET) {
+                            for (value = 0; value < 256; value++) {
+                                if (_generic_isCC(value, classnum)) {
+                                    ANYOF_BITMAP_SET(data->start_class, value);
+                                }
+                            }
+                        } else {
+                            for (value = 0; value < 128; value++) {
+                                if (_generic_isCC_A(UNI_TO_NATIVE(value),
+                                                                  classnum))
+                                {
+                                    ANYOF_BITMAP_SET(data->start_class, value);
+                                }
+                            }
+                        }
+		    }
+		    break;
+
+		case NPOSIXD:
+                    classnum = FLAGS(scan);
+
+                join_nposix:
+                    charset = (regex_charset) (PL_regkind[OP(scan)] - OP(scan));
+		    if (flags & SCF_DO_STCLASS_AND) {
+			if (!(data->start_class->flags & ANYOF_LOCALE)) {
+			    ANYOF_CLASS_CLEAR(data->start_class,ANYOF_ALNUM);
+                            if (charset == REGEX_UNICODE_CHARSET) {
+                                for (value = 0; value < 256; value++) {
+                                    if (_generic_isCC(UNI_TO_NATIVE(value),
+                                                                    classnum))
+                                    {
+                                        ANYOF_BITMAP_CLEAR(data->start_class,
+                                                           value);
+                                    }
+                                }
+                            } else {
+                                for (value = 0; value < 128; value++) {
+                                    if (_generic_isCC_A(UNI_TO_NATIVE(value),
+                                                                      classnum))
+                                    {
+                                        ANYOF_BITMAP_CLEAR(data->start_class,
+                                                           value);
+                                    }
+                                }
+			    }
+			}
+		    }
+		    else {
+			if (data->start_class->flags & ANYOF_LOCALE)
+			    ANYOF_CLASS_SET(data->start_class,ANYOF_NALNUM);
+
+			/* Even if under locale, set the bits for non-locale in
+			 * case it isn't a true locale-node.  This will create
+			 * false positives if it truly is locale */
+                        if (charset == REGEX_UNICODE_CHARSET) {
+			    for (value = 0; value < 256; value++) {
+                                if (! _generic_isCC(UNI_TO_NATIVE(value),
+                                                                  classnum))
+                                {
+				    ANYOF_BITMAP_SET(data->start_class, value);
+				}
+			    }
+			} else {
+			    for (value = 0; value < 128; value++) {
+                                if (! _generic_isCC_A(UNI_TO_NATIVE(value),
+                                                                    classnum))
+                                {
+				    ANYOF_BITMAP_SET(data->start_class, value);
+				}
+			    }
+			}
+		    }
+		    break;
+
 		case ALNUM:
 		    if (flags & SCF_DO_STCLASS_AND) {
 			if (!(data->start_class->flags & ANYOF_LOCALE)) {
