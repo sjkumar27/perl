@@ -231,10 +231,10 @@ EXTCONST U8 PL_regkind[] = {
 	POSIXD,   	/* POSIXL                 */
 	POSIXD,   	/* POSIXU                 */
 	POSIXD,   	/* POSIXA                 */
-	POSIXD,   	/* NPOSIXD                */
-	POSIXD,   	/* NPOSIXL                */
-	POSIXD,   	/* NPOSIXU                */
-	POSIXD,   	/* NPOSIXA                */
+	NPOSIXD,  	/* NPOSIXD                */
+	NPOSIXD,  	/* NPOSIXL                */
+	NPOSIXD,  	/* NPOSIXU                */
+	NPOSIXD,  	/* NPOSIXA                */
 	CLUMP,    	/* CLUMP                  */
 	BRANCH,   	/* BRANCH                 */
 	BACK,     	/* BACK                   */
