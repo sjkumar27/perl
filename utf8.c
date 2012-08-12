@@ -4075,9 +4075,15 @@ Perl__swash_to_invlist(pTHX_ SV* const swash)
 bool
 Perl__is_swash_user_defined(pTHX_ SV* const swash)
 {
-    SV** ptr = hv_fetchs(MUTABLE_HV(SvRV(swash)), "USER_DEFINED", FALSE);
+    SV** ptr;
 
     PERL_ARGS_ASSERT__IS_SWASH_USER_DEFINED;
+
+    if (! SvROK(swash) || SvTYPE(SvRV(swash)) != SVt_PVHV) {
+        return FALSE;
+    }
+
+    ptr = hv_fetchs(MUTABLE_HV(SvRV(swash)), "USER_DEFINED", FALSE);
 
     if (! ptr) {
         return FALSE;
@@ -4088,9 +4094,15 @@ Perl__is_swash_user_defined(pTHX_ SV* const swash)
 SV*
 Perl__get_swash_invlist(pTHX_ SV* const swash)
 {
-    SV** ptr = hv_fetchs(MUTABLE_HV(SvRV(swash)), "INVLIST", FALSE);
+    SV** ptr;
 
     PERL_ARGS_ASSERT__GET_SWASH_INVLIST;
+
+    if (! SvROK(swash) || SvTYPE(SvRV(swash)) != SVt_PVHV) {
+        return NULL;
+    }
+
+    ptr = hv_fetchs(MUTABLE_HV(SvRV(swash)), "INVLIST", FALSE);
 
     if (! ptr) {
         return NULL;
