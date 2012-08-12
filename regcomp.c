@@ -4211,6 +4211,12 @@ S_study_chunk(pTHX_ RExC_state_t *pRExC_state, regnode **scanp,
 			cl_or(pRExC_state, data->start_class,
 			      (struct regnode_charclass_class*)scan);
 		    break;
+		case ALNUM:
+                    classnum = _CC_WORDCHAR;
+                    goto join_posix;
+		case NALNUM:
+                    classnum = _CC_WORDCHAR;
+                    goto join_nposix;
 
 		case POSIXD:
                     classnum = FLAGS(scan);
@@ -4321,197 +4327,19 @@ S_study_chunk(pTHX_ RExC_state_t *pRExC_state, regnode **scanp,
 		    }
 		    break;
 
-		case ALNUM:
-		    if (flags & SCF_DO_STCLASS_AND) {
-			if (!(data->start_class->flags & ANYOF_LOCALE)) {
-			    ANYOF_CLASS_CLEAR(data->start_class,ANYOF_NALNUM);
-                            if (OP(scan) == ALNUMU) {
-                                for (value = 0; value < 256; value++) {
-                                    if (!isWORDCHAR_L1(value)) {
-                                        ANYOF_BITMAP_CLEAR(data->start_class, value);
-                                    }
-                                }
-                            } else {
-                                for (value = 0; value < 256; value++) {
-                                    if (!isALNUM(value)) {
-                                        ANYOF_BITMAP_CLEAR(data->start_class, value);
-                                    }
-                                }
-                            }
-			}
-		    }
-		    else {
-			if (data->start_class->flags & ANYOF_LOCALE)
-			    ANYOF_CLASS_SET(data->start_class,ANYOF_ALNUM);
-
-			/* Even if under locale, set the bits for non-locale
-			 * in case it isn't a true locale-node.  This will
-			 * create false positives if it truly is locale */
-                        if (OP(scan) == ALNUMU) {
-                            for (value = 0; value < 256; value++) {
-                                if (isWORDCHAR_L1(value)) {
-                                    ANYOF_BITMAP_SET(data->start_class, value);
-                                }
-                            }
-                        } else {
-                            for (value = 0; value < 256; value++) {
-                                if (isALNUM(value)) {
-                                    ANYOF_BITMAP_SET(data->start_class, value);
-                                }
-                            }
-                        }
-		    }
-		    break;
-		case NALNUM:
-		    if (flags & SCF_DO_STCLASS_AND) {
-			if (!(data->start_class->flags & ANYOF_LOCALE)) {
-			    ANYOF_CLASS_CLEAR(data->start_class,ANYOF_ALNUM);
-                            if (OP(scan) == NALNUMU) {
-                                for (value = 0; value < 256; value++) {
-                                    if (isWORDCHAR_L1(value)) {
-                                        ANYOF_BITMAP_CLEAR(data->start_class, value);
-                                    }
-                                }
-                            } else {
-                                for (value = 0; value < 256; value++) {
-                                    if (isALNUM(value)) {
-                                        ANYOF_BITMAP_CLEAR(data->start_class, value);
-                                    }
-                                }
-			    }
-			}
-		    }
-		    else {
-			if (data->start_class->flags & ANYOF_LOCALE)
-			    ANYOF_CLASS_SET(data->start_class,ANYOF_NALNUM);
-
-			/* Even if under locale, set the bits for non-locale in
-			 * case it isn't a true locale-node.  This will create
-			 * false positives if it truly is locale */
-			if (OP(scan) == NALNUMU) {
-			    for (value = 0; value < 256; value++) {
-				if (! isWORDCHAR_L1(value)) {
-				    ANYOF_BITMAP_SET(data->start_class, value);
-				}
-			    }
-			} else {
-			    for (value = 0; value < 256; value++) {
-				if (! isALNUM(value)) {
-				    ANYOF_BITMAP_SET(data->start_class, value);
-				}
-			    }
-			}
-		    }
-		    break;
 		case SPACE:
-		    if (flags & SCF_DO_STCLASS_AND) {
-			if (!(data->start_class->flags & ANYOF_LOCALE)) {
-			    ANYOF_CLASS_CLEAR(data->start_class,ANYOF_NSPACE);
-			    if (OP(scan) == SPACEU) {
-                                for (value = 0; value < 256; value++) {
-                                    if (!isSPACE_L1(value)) {
-                                        ANYOF_BITMAP_CLEAR(data->start_class, value);
-                                    }
-                                }
-                            } else {
-                                for (value = 0; value < 256; value++) {
-                                    if (!isSPACE(value)) {
-                                        ANYOF_BITMAP_CLEAR(data->start_class, value);
-                                    }
-                                }
-                            }
-			}
-		    }
-		    else {
-                        if (data->start_class->flags & ANYOF_LOCALE) {
-			    ANYOF_CLASS_SET(data->start_class,ANYOF_SPACE);
-                        }
-                        if (OP(scan) == SPACEU) {
-                            for (value = 0; value < 256; value++) {
-                                if (isSPACE_L1(value)) {
-                                    ANYOF_BITMAP_SET(data->start_class, value);
-                                }
-                            }
-                        } else {
-                            for (value = 0; value < 256; value++) {
-                                if (isSPACE(value)) {
-                                    ANYOF_BITMAP_SET(data->start_class, value);
-                                }
-                            }
-			}
-		    }
-		    break;
+                    classnum = _CC_SPACE;
+                    goto join_posix;
 		case NSPACE:
-		    if (flags & SCF_DO_STCLASS_AND) {
-			if (!(data->start_class->flags & ANYOF_LOCALE)) {
-			    ANYOF_CLASS_CLEAR(data->start_class,ANYOF_SPACE);
-                            if (OP(scan) == NSPACEU) {
-                                for (value = 0; value < 256; value++) {
-                                    if (isSPACE_L1(value)) {
-                                        ANYOF_BITMAP_CLEAR(data->start_class, value);
-                                    }
-                                }
-                            } else {
-                                for (value = 0; value < 256; value++) {
-                                    if (isSPACE(value)) {
-                                        ANYOF_BITMAP_CLEAR(data->start_class, value);
-                                    }
-                                }
-                            }
-			}
-		    }
-		    else {
-			if (data->start_class->flags & ANYOF_LOCALE)
-			    ANYOF_CLASS_SET(data->start_class,ANYOF_NSPACE);
-                        if (OP(scan) == NSPACEU) {
-                            for (value = 0; value < 256; value++) {
-                                if (!isSPACE_L1(value)) {
-                                    ANYOF_BITMAP_SET(data->start_class, value);
-                                }
-                            }
-                        }
-                        else {
-                            for (value = 0; value < 256; value++) {
-                                if (!isSPACE(value)) {
-                                    ANYOF_BITMAP_SET(data->start_class, value);
-                                }
-                            }
-                        }
-		    }
-		    break;
+                    classnum = _CC_SPACE;
+                    goto join_nposix;
 		case DIGIT:
-		    if (flags & SCF_DO_STCLASS_AND) {
-			if (!(data->start_class->flags & ANYOF_LOCALE)) {
-                            ANYOF_CLASS_CLEAR(data->start_class,ANYOF_NDIGIT);
-			    for (value = 0; value < 256; value++)
-				if (!isDIGIT(value))
-				    ANYOF_BITMAP_CLEAR(data->start_class, value);
-			}
-		    }
-		    else {
-			if (data->start_class->flags & ANYOF_LOCALE)
-			    ANYOF_CLASS_SET(data->start_class,ANYOF_DIGIT);
-			for (value = 0; value < 256; value++)
-			    if (isDIGIT(value))
-				ANYOF_BITMAP_SET(data->start_class, value);
-		    }
-		    break;
+                    classnum = _CC_DIGIT;
+                    goto join_posix;
 		case NDIGIT:
-		    if (flags & SCF_DO_STCLASS_AND) {
-			if (!(data->start_class->flags & ANYOF_LOCALE))
-                            ANYOF_CLASS_CLEAR(data->start_class,ANYOF_DIGIT);
-			for (value = 0; value < 256; value++)
-			    if (isDIGIT(value))
-				ANYOF_BITMAP_CLEAR(data->start_class, value);
-		    }
-		    else {
-			if (data->start_class->flags & ANYOF_LOCALE)
-			    ANYOF_CLASS_SET(data->start_class,ANYOF_NDIGIT);
-			for (value = 0; value < 256; value++)
-			    if (!isDIGIT(value))
-				ANYOF_BITMAP_SET(data->start_class, value);
-		    }
-		    break;
+                    classnum = _CC_DIGIT;
+                    goto join_nposix;
+
 		CASE_SYNST_FNC(VERTWS);
 		CASE_SYNST_FNC(HORIZWS);
 
