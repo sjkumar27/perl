@@ -2198,6 +2198,7 @@ use File::Glob qw(:case);
                 lib/dbm_filter_util.pl
                 lib/deprecate.pm
                 lib/dumpvar.{pl,t}
+                lib/experimental.{pm,t}
                 lib/feature.{pm,t}
                 lib/feature/
                 lib/filetest.{pm,t}

@@ -524,6 +524,17 @@ See L<perlfunc/fc> for details.
 
 This feature is available from Perl 5.16 onwards.
 
+=head1 EXPERIMENTAL FEATURES
+
+In addition to those listed above, there are experimental features
+beginning with the "experimental::" prefix, which can also be enabled by
+the L<experimental> pragma, and which are described in more detail there:
+
+    experimental::XXX
+
+(There is only one right now.)  These features are subject to change or
+removal in future Perl versions.
+
 =head1 FEATURE BUNDLES
 
 It's possible to load multiple features together, using
@@ -587,6 +598,10 @@ If the required version is older than Perl 5.10, the ":default" feature
 bundle is automatically loaded instead.
 
 =back
+
+=head1 SEE ALSO
+
+L<experimental>
 
 =cut
 
