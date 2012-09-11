@@ -31,6 +31,8 @@ my %feature = (
     unicode_eval    => 'unieval',
     unicode_strings => 'unicode',
     fc              => 'fc',
+
+   'experimental::lexical_subs' => 'lexsubs',
 );
 
 # NOTE: If a feature is ever enabled in a non-contiguous range of Perl
@@ -280,7 +282,7 @@ EOI
 
 EOH3
     }
-    else {
+    elsif ($first) {
 	print $h <<EOH4;
 #define FEATURE_$NAME\_IS_ENABLED \\
     ( \\
@@ -290,6 +292,16 @@ EOH3
     )
 
 EOH4
+    }
+    else {
+	print $h <<EOH5;
+#define FEATURE_$NAME\_IS_ENABLED \\
+    ( \\
+	CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \\
+	 FEATURE_IS_ENABLED("$name") \\
+    )
+
+EOH5
     }
 }
 
@@ -530,7 +542,7 @@ In addition to those listed above, there are experimental features
 beginning with the "experimental::" prefix, which can also be enabled by
 the L<experimental> pragma, and which are described in more detail there:
 
-    experimental::XXX
+    experimental::lexical_subs
 
 (There is only one right now.)  These features are subject to change or
 removal in future Perl versions.

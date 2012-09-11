@@ -32,11 +32,11 @@ experimental - Enable experimental features
 
 =head1 SYNOPSIS
 
-    use experimental 'XXX';
-    # XXX feature enabled here
+    use experimental 'lexical_subs';
+    # lexical_subs feature enabled here
 
     {
-        no experimental 'XXX';
+        no experimental 'lexical_subs';
         # temporarily disabled
     }
 
@@ -60,9 +60,10 @@ is actually equivalent to:
 
 =over
 
-=item * XXX
+=item * lexical_subs
 
-blah blah blah
+This enables declaration of subroutines via C<my sub foo>, C<state sub foo>
+and C<our sub foo> syntax.  See perlsub/xxxx for details.
 
 =back
 

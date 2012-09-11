@@ -10,17 +10,17 @@ EXPECT
 Can't find string terminator "foo" anywhere before EOF at (eval 1) line 1.
 ########
 # NAME Missing name in "my sub"
-my sub;
+use experimental 'lexical_subs'; my sub;
 EXPECT
 Missing name in "my sub" at - line 1.
 ########
 # NAME Missing name in "our sub"
-our sub;
+use experimental 'lexical_subs'; our sub;
 EXPECT
 Missing name in "our sub" at - line 1.
 ########
 # NAME Missing name in "state sub"
-use 5.01;
+use 5.01; use experimental 'lexical_subs';
 state sub;
 EXPECT
 Missing name in "state sub" at - line 2.

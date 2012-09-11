@@ -8,22 +8,23 @@ package feature;
 our $VERSION = '1.29';
 
 our %feature = (
-    fc              => 'feature_fc',
-    say             => 'feature_say',
-    state           => 'feature_state',
-    switch          => 'feature_switch',
-    evalbytes       => 'feature_evalbytes',
-    array_base      => 'feature_arybase',
-    current_sub     => 'feature___SUB__',
-    unicode_eval    => 'feature_unieval',
-    unicode_strings => 'feature_unicode',
+    fc                         => 'feature_fc',
+    say                        => 'feature_say',
+    state                      => 'feature_state',
+    switch                     => 'feature_switch',
+    evalbytes                  => 'feature_evalbytes',
+    array_base                 => 'feature_arybase',
+    current_sub                => 'feature___SUB__',
+    unicode_eval               => 'feature_unieval',
+    unicode_strings            => 'feature_unicode',
+    experimental::lexical_subs => 'feature_lexsubs',
 );
 
 our %feature_bundle = (
     "5.10"    => [qw(array_base say state switch)],
     "5.11"    => [qw(array_base say state switch unicode_strings)],
     "5.15"    => [qw(current_sub evalbytes fc say state switch unicode_eval unicode_strings)],
-    "all"     => [qw(array_base current_sub evalbytes fc say state switch unicode_eval unicode_strings)],
+    "all"     => [qw(array_base current_sub evalbytes experimental::lexical_subs fc say state switch unicode_eval unicode_strings)],
     "default" => [qw(array_base)],
 );
 
@@ -232,7 +233,7 @@ In addition to those listed above, there are experimental features
 beginning with the "experimental::" prefix, which can also be enabled by
 the L<experimental> pragma, and which are described in more detail there:
 
-    experimental::XXX
+    experimental::lexical_subs
 
 (There is only one right now.)  These features are subject to change or
 removal in future Perl versions.

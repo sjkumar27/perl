@@ -1133,7 +1133,7 @@ Use of :locked is deprecated at - line 4.
 Use of :locked is deprecated at - line 6.
 ########
 # toke.c
-use warnings "syntax";
+use warnings "syntax"; use experimental 'lexical_subs';
 sub proto_after_array(@$);
 sub proto_after_arref(\@$);
 sub proto_after_arref2(\[@$]);
@@ -1147,7 +1147,7 @@ sub underscore_fail($_$);
 sub underscore_after_at(@_);
 our sub hour (@$);
 my sub migh (@$);
-use 5.01;
+use feature 'state';
 state sub estate (@$);
 package other;
 sub hour (@$);
