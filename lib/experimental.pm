@@ -63,7 +63,7 @@ is actually equivalent to:
 =item * lexical_subs
 
 This enables declaration of subroutines via C<my sub foo>, C<state sub foo>
-and C<our sub foo> syntax.  See perlsub/xxxx for details.
+and C<our sub foo> syntax.  See L<perlsub/Lexical Subroutines> for details.
 
 =back
 
