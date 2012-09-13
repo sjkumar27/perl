@@ -5255,21 +5255,18 @@ NULL
 	    assert(0); /* NOTREACHED */
 
 	case CURLYM_A: /* we've just matched an A */
-	    locinput = st->locinput;
-	    nextchr = UCHARAT(locinput);
-
 	    ST.count++;
 	    /* after first match, determine A's length: u.curlym.alen */
 	    if (ST.count == 1) {
 		if (PL_reg_match_utf8) {
-		    char *s = locinput;
-		    while (s < reginput) {
+		    char *s = st->locinput;
+		    while (s < locinput) {
 			ST.alen++;
 			s += UTF8SKIP(s);
 		    }
 		}
 		else {
-		    ST.alen = reginput - locinput;
+		    ST.alen = locinput - st->locinput;
 		}
 		if (ST.alen == 0)
 		    ST.count = ST.minmod ? ARG1(ST.me) : ARG2(ST.me);
@@ -5281,8 +5278,6 @@ NULL
 			  (IV) ST.count, (IV)ST.alen)
 	    );
 
-	    locinput = reginput;
-	                
 	    if (cur_eval && cur_eval->u.eval.close_paren && 
 	        cur_eval->u.eval.close_paren == (U32)ST.me->flags) 
 	        goto fake_end;
@@ -5303,7 +5298,6 @@ NULL
 		sayNO;
 
 	  curlym_do_B: /* execute the B in /A{m,n}B/  */
-	    reginput = locinput;
 	    if (ST.c1 == CHRTEST_UNINIT) {
 		/* calculate c1 and c2 for possible match of 1st char
 		 * following curly */
@@ -5345,8 +5339,8 @@ NULL
 		    "", (IV)ST.count)
 		);
 	    if (ST.c1 != CHRTEST_VOID
-		    && UCHARAT(reginput) != ST.c1
-		    && UCHARAT(reginput) != ST.c2)
+		    && nextchr != ST.c1
+		    && nextchr != ST.c2)
 	    {
 		/* simulate B failing */
 		DEBUG_OPTIMISE_r(
@@ -5364,8 +5358,8 @@ NULL
 		I32 paren = ST.me->flags;
 		if (ST.count) {
 		    rex->offs[paren].start
-			= HOPc(reginput, -ST.alen) - PL_bostr;
-		    rex->offs[paren].end = reginput - PL_bostr;
+			= HOPc(locinput, -ST.alen) - PL_bostr;
+		    rex->offs[paren].end = locinput - PL_bostr;
 		    if ((U32)paren > rex->lastparen)
 			rex->lastparen = paren;
 		    rex->lastcloseparen = paren;
@@ -5399,6 +5393,7 @@ NULL
 		sayNO;
 	    ST.count--;
 	    locinput = HOPc(locinput, -ST.alen);
+            nextchr = UCHARAT(locinput);
 	    goto curlym_do_B; /* try to match B */
 
 #undef ST
