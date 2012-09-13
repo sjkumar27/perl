@@ -3615,6 +3615,8 @@ S_regmatch(pTHX_ regmatch_info *reginfo, char *startpos, regnode *prog)
 	    assert(0); /* NOTREACHED */
 
 	case TRIE_next_fail: /* we failed - try next alternative */
+        {
+            U8 *uc;
             if ( ST.jump) {
                 REGCP_UNWIND(ST.cp);
                 UNWIND_PAREN(ST.lastparen, ST.lastcloseparen);
@@ -3659,7 +3661,6 @@ S_regmatch(pTHX_ regmatch_info *reginfo, char *startpos, regnode *prog)
 	    /* find start char of end of current word */
 	    {
 		U32 chars; /* how many chars to skip */
-		U8 *uc = ST.firstpos;
 		reg_trie_data * const trie
 		    = (reg_trie_data*)rexi->data->data[ARG(ST.me)];
 
@@ -3667,6 +3668,7 @@ S_regmatch(pTHX_ regmatch_info *reginfo, char *startpos, regnode *prog)
 			    >=  ST.firstchars);
 		chars = (trie->wordinfo[ST.nextword].len - trie->prefixlen)
 			    - ST.firstchars;
+		uc = ST.firstpos;
 
 		if (ST.longfold) {
 		    /* the hard option - fold each char in turn and find
@@ -3706,7 +3708,6 @@ S_regmatch(pTHX_ regmatch_info *reginfo, char *startpos, regnode *prog)
 		    else
 			uc += chars;
 		}
-		reginput = (char *)uc;
 	    }
 
 	    scan = ST.me + ((ST.jump && ST.jump[ST.nextword])
@@ -3724,7 +3725,7 @@ S_regmatch(pTHX_ regmatch_info *reginfo, char *startpos, regnode *prog)
 	    });
 
 	    if (ST.accepted > 1 || has_cutgroup) {
-		PUSH_STATE_GOTO(TRIE_next, scan, reginput);
+		PUSH_STATE_GOTO(TRIE_next, scan, (char*)uc);
 		assert(0); /* NOTREACHED */
 	    }
 	    /* only one choice left - just continue */
@@ -3747,10 +3748,11 @@ S_regmatch(pTHX_ regmatch_info *reginfo, char *startpos, regnode *prog)
 		    PL_colors[5] );
 	    });
 
-	    locinput = reginput;
+	    locinput = (char*)uc;
 	    nextchr = UCHARAT(locinput);
 	    continue; /* execute rest of RE */
 	    assert(0); /* NOTREACHED */
+        }
 #undef  ST
 
 	case EXACT: {
