@@ -5794,9 +5794,12 @@ NULL
 #undef  ST
 #define ST st->u.ifmatch
 
+        {
+            char *newstart;
+
 	case SUSPEND:	/* (?>A) */
 	    ST.wanted = 1;
-	    reginput = locinput;
+	    newstart = locinput;
 	    goto do_ifmatch;	
 
 	case UNLESSM:	/* -ve lookaround: (?!A), or with flags, (?<!A) */
@@ -5821,10 +5824,10 @@ NULL
 			next = NULL;
 		    break;
 		}
-		reginput = s;
+		newstart = s;
 	    }
 	    else
-		reginput = locinput;
+		newstart = locinput;
 
 	  do_ifmatch:
 	    ST.me = scan;
@@ -5832,8 +5835,9 @@ NULL
 	    logical = 0; /* XXX: reset state of logical once it has been saved into ST */
 	    
 	    /* execute body of (?...A) */
-	    PUSH_YES_STATE_GOTO(IFMATCH_A, NEXTOPER(NEXTOPER(scan)), reginput);
+	    PUSH_YES_STATE_GOTO(IFMATCH_A, NEXTOPER(NEXTOPER(scan)), newstart);
 	    assert(0); /* NOTREACHED */
+        }
 
 	case IFMATCH_A_fail: /* body of (?...A) failed */
 	    ST.wanted = !ST.wanted;
@@ -5846,10 +5850,9 @@ NULL
 	    else if (!ST.wanted)
 		sayNO;
 
-	    if (OP(ST.me) == SUSPEND)
-		locinput = reginput;
-	    else {
-		locinput = reginput = st->locinput;
+	    if (OP(ST.me) != SUSPEND) {
+                /* restore old position except for (?>...) */
+		locinput = st->locinput;
 		nextchr = UCHARAT(locinput);
 	    }
 	    scan = ST.me + ARG(ST.me);
