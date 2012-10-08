@@ -2859,7 +2859,15 @@ Perl__core_swash_init(pTHX_ const char* pkg, const char* name, SV *listsv, I32 m
 	method = gv_fetchmeth(stash, "SWASHNEW", 8, -1);
 	if (!method) {	/* demand load utf8 */
 	    ENTER;
-	    errsv_save = newSVsv(ERRSV);
+	    /* Do not use newSVsv(ERRSV).  newSVsv does not do COW.  We may
+	       be called from pp_subst, which holds a pointer to
+	       SvPVX(ERRSV) during $@ =~ s///.  If we make this a real
+	       copy, the sv_setsv(ERRSV, errsv_save) below will do COW,
+	       making $@ point to the new string buffer.  By allowing COW
+	       in both places, we ensure that SvPVX(ERRSV) points to the
+	       same spot afterwards. */
+	    errsv_save = newSV(0);
+	    sv_setsv(errsv_save, ERRSV);
 	    /* It is assumed that callers of this routine are not passing in
 	     * any user derived data.  */
 	    /* Need to do this after save_re_context() as it will set
@@ -2884,7 +2892,9 @@ Perl__core_swash_init(pTHX_ const char* pkg, const char* name, SV *listsv, I32 m
 	mPUSHi(minbits);
 	mPUSHi(none);
 	PUTBACK;
-	errsv_save = newSVsv(ERRSV);
+	/* Not newSVsv.  See above. */
+	errsv_save = newSV(0);
+	sv_setsv(errsv_save, ERRSV);
 	/* If we already have a pointer to the method, no need to use
 	 * call_method() to repeat the lookup.  */
 	if (method ? call_sv(MUTABLE_SV(method), G_SCALAR)

@@ -1744,6 +1744,8 @@ Like sv_utf8_upgrade, but doesn't do magic on C<sv>.
     ((SvIsCOW(sv) ? sv_force_normal_flags(sv, 0) : (void) 0), 0)
 #  define SvIsCOW_normal(sv)	(SvIsCOW(sv) && SvLEN(sv))
 #  define SvRELEASE_IVX_(sv)	SvRELEASE_IVX(sv),
+#  define SvCANCOW(sv) \
+	(SvIsCOW(sv) || (SvFLAGS(sv) & CAN_COW_MASK) == CAN_COW_FLAGS)
 #else
 #  define SvRELEASE_IVX(sv)   0
 /* This little game brought to you by the need to shut this warning up:
@@ -1751,6 +1753,16 @@ mg.c: In function 'Perl_magic_get':
 mg.c:1024: warning: left-hand operand of comma expression has no effect
 */
 #  define SvRELEASE_IVX_(sv)  /**/
+#  ifdef PERL_NEW_COPY_ON_WRITE
+#   define SvCANCOW(sv)						    \
+	(SvIsCOW(sv)						     \
+	 ? SvLEN(sv) ? CowREFCNT(sv) != SV_COW_REFCNT_MAX : 1 \
+	 : (SvFLAGS(sv) & CAN_COW_MASK) == CAN_COW_FLAGS	       \
+			    && SvCUR(sv)+1 < SvLEN(sv))
+   /* Note: To allow 256 COW "copies", a refcnt of 0 means 1. */
+#   define CowREFCNT(sv)	(*(U8 *)(SvPVX(sv)+SvLEN(sv)-1))
+#   define SV_COW_REFCNT_MAX	(1 << sizeof(U8)*8) - 1
+#  endif
 #endif /* PERL_OLD_COPY_ON_WRITE */
 
 /* This is a pessimistic view. Scalar must be purely a read-write PV to copy-
@@ -1967,7 +1979,12 @@ See also C<PL_sv_yes> and C<PL_sv_no>.
     } STMT_END
 
 
-#define SvGROW(sv,len) (SvLEN(sv) < (len) ? sv_grow(sv,len) : SvPVX(sv))
+#ifdef PERL_NEW_COPY_ON_WRITE
+# define SvGROW(sv,len) \
+	(SvIsCOW(sv) || SvLEN(sv) < (len) ? sv_grow(sv,len) : SvPVX(sv))
+#else
+# define SvGROW(sv,len) (SvLEN(sv) < (len) ? sv_grow(sv,len) : SvPVX(sv))
+#endif
 #define SvGROW_mutable(sv,len) \
     (SvLEN(sv) < (len) ? sv_grow(sv,len) : SvPVX_mutable(sv))
 #define Sv_Grow sv_grow

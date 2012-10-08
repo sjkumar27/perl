@@ -1634,6 +1634,11 @@ Perl_do_sv_dump(pTHX_ I32 level, PerlIO *file, SV *sv, I32 nest, I32 maxnest, bo
 	    PerlIO_printf(file, "\n");
 	    Perl_dump_indent(aTHX_ level, file, "  CUR = %"IVdf"\n", (IV)SvCUR(sv));
 	    Perl_dump_indent(aTHX_ level, file, "  LEN = %"IVdf"\n", (IV)SvLEN(sv));
+#ifdef PERL_NEW_COPY_ON_WRITE
+	    if (SvIsCOW(sv) && SvLEN(sv))
+		Perl_dump_indent(aTHX_ level, file, "  COW_REFCNT = %d\n",
+				       CowREFCNT(sv));
+#endif
 	}
 	else
 	    Perl_dump_indent(aTHX_ level, file, "  PV = 0\n");
@@ -2080,7 +2085,7 @@ Perl_do_sv_dump(pTHX_ I32 level, PerlIO *file, SV *sv, I32 nest, I32 maxnest, bo
 				PTR2UV(r->offs));
 	    Perl_dump_indent(aTHX_ level, file, "  QR_ANONCV = 0x%"UVxf"\n",
 				PTR2UV(r->qr_anoncv));
-#ifdef PERL_OLD_COPY_ON_WRITE
+#ifdef PERL_ANY_COW
 	    Perl_dump_indent(aTHX_ level, file, "  SAVED_COPY = 0x%"UVxf"\n",
 				PTR2UV(r->saved_copy));
 #endif
