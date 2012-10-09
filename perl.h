@@ -528,11 +528,27 @@ register struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 #   define VOL
 #endif
 
-#define TAINT		(PL_tainted = TRUE)
-#define TAINT_NOT	(PL_tainted = FALSE)
-#define TAINT_IF(c)	if (c) { PL_tainted = TRUE; }
-#define TAINT_ENV()	if (PL_tainting) { taint_env(); }
-#define TAINT_PROPER(s)	if (PL_tainting) { taint_proper(NULL, s); }
+#ifdef NO_TAINT_SUPPORT
+#   define TAINT		NOOP
+#   define TAINT_NOT		NOOP
+#   define TAINT_IF(c)		NOOP
+#   define TAINT_ENV()		NOOP
+#   define TAINT_PROPER(s)	NOOP
+#   define TAINT_set(s)		NOOP
+#   define TAINT_get		0
+#   define TAINTING_get		0
+#   define TAINTING_set(s)	NOOP
+#else
+#   define TAINT		(PL_tainted = TRUE)
+#   define TAINT_NOT	(PL_tainted = FALSE)
+#   define TAINT_IF(c)	if (c) { PL_tainted = TRUE; }
+#   define TAINT_ENV()	if (PL_tainting) { taint_env(); }
+#   define TAINT_PROPER(s)	if (PL_tainting) { taint_proper(NULL, s); }
+#   define TAINT_set(s)		(PL_tainted = (s))
+#   define TAINT_get		(PL_tainted)
+#   define TAINTING_get		(PL_tainting)
+#   define TAINTING_set(s)	(PL_tainting = (s))
+#endif
 
 /* flags used internally only within pp_subst and pp_substcont */
 #ifdef PERL_CORE

@@ -38,7 +38,7 @@ Perl_taint_proper(pTHX_ const char *f, const char *const s)
 
 	DEBUG_u(PerlIO_printf(Perl_debug_log,
 			       "%s %d %"UVuf" %"UVuf"\n",
-			       s, PL_tainted, uid, euid));
+			       s, TAINT_get, uid, euid));
     }
 #   else
     {
@@ -47,12 +47,12 @@ Perl_taint_proper(pTHX_ const char *f, const char *const s)
 
 	DEBUG_u(PerlIO_printf(Perl_debug_log,
 			       "%s %d %"IVdf" %"IVdf"\n",
-			       s, PL_tainted, uid, euid));
+			       s, TAINT_get, uid, euid));
     }
 #   endif
 #endif
 
-    if (PL_tainted) {
+    if (TAINT_get) {
 	const char *ug;
 
 	if (!f)
@@ -99,9 +99,9 @@ Perl_taint_env(pTHX)
      * it probably doesn't reflect the actual environment */
     if (!GvHV(PL_envgv) || !(SvRMAGICAL(GvHV(PL_envgv))
 	    && mg_find((const SV *)GvHV(PL_envgv), PERL_MAGIC_env))) {
-	const bool was_tainted = PL_tainted;
+	const bool was_tainted = TAINT_get;
 	const char * const name = GvENAME(PL_envgv);
-	PL_tainted = TRUE;
+	TAINT;
 	if (strEQ(name,"ENV"))
 	    /* hash alias */
 	    taint_proper("%%ENV is aliased to %s%s", "another variable");
@@ -109,7 +109,7 @@ Perl_taint_env(pTHX)
 	    /* glob alias: report it in the error message */
 	    taint_proper("%%ENV is aliased to %%%s%s", name);
 	/* this statement is reached under -t or -U */
-	PL_tainted = was_tainted;
+	TAINT_set(was_tainted);
     }
 
 #ifdef VMS
@@ -154,10 +154,10 @@ Perl_taint_env(pTHX)
     svp = hv_fetchs(GvHVn(PL_envgv),"TERM",FALSE);
     if (svp && *svp && SvTAINTED(*svp)) {
 	STRLEN len;
-	const bool was_tainted = PL_tainted;
+	const bool was_tainted = TAINT_get;
 	const char *t = SvPV_const(*svp, len);
 	const char * const e = t + len;
-	PL_tainted = was_tainted;
+	TAINT_set(was_tainted);
 	if (t < e && isALNUM(*t))
 	    t++;
 	while (t < e && (isALNUM(*t) || strchr("-_.+", *t)))

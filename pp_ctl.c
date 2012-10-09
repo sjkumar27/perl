@@ -129,7 +129,7 @@ PP(pp_regcomp)
 	   some day. */
 	if (pm->op_type == OP_MATCH) {
 	    SV *lhs;
-	    const bool was_tainted = PL_tainted;
+	    const bool was_tainted = TAINT_get;
 	    if (pm->op_flags & OPf_STACKED)
 		lhs = args[-1];
 	    else if (pm->op_private & OPpTARGET_MY)
@@ -139,7 +139,7 @@ PP(pp_regcomp)
 	    /* Restore the previous value of PL_tainted (which may have been
 	       modified by get-magic), to avoid incorrectly setting the
 	       RXf_TAINTED flag further down. */
-	    PL_tainted = was_tainted;
+	    TAINT_set(was_tainted);
 	}
 	tmp = reg_temp_copy(NULL, new_re);
 	ReREFCNT_dec(new_re);
@@ -151,7 +151,7 @@ PP(pp_regcomp)
     }
 
 #ifndef INCOMPLETE_TAINTS
-    if (PL_tainting && PL_tainted) {
+    if (TAINTING_get && TAINT_get) {
 	SvTAINTED_on((SV*)new_re);
 	RX_EXTFLAGS(new_re) |= RXf_TAINTED;
     }
@@ -258,7 +258,7 @@ PP(pp_substcont)
 	    /* update the taint state of various various variables in
 	     * preparation for final exit.
 	     * See "how taint works" above pp_subst() */
-	    if (PL_tainting) {
+	    if (TAINTING_get) {
 		if ((cx->sb_rxtainted & SUBST_TAINT_PAT) ||
 		    ((cx->sb_rxtainted & (SUBST_TAINT_STR|SUBST_TAINT_RETAINT))
 				    == (SUBST_TAINT_STR|SUBST_TAINT_RETAINT))
@@ -270,8 +270,10 @@ PP(pp_substcont)
 		)
 		    SvTAINTED_on(TOPs);  /* taint return value */
 		/* needed for mg_set below */
-		PL_tainted = cBOOL(cx->sb_rxtainted &
-			    (SUBST_TAINT_STR|SUBST_TAINT_PAT|SUBST_TAINT_REPL));
+		TAINT_set(
+                    cBOOL(cx->sb_rxtainted &
+			  (SUBST_TAINT_STR|SUBST_TAINT_PAT|SUBST_TAINT_REPL))
+                );
 		SvTAINT(TARG);
 	    }
 	    /* PL_tainted must be correctly set for this mg_set */
@@ -320,7 +322,7 @@ PP(pp_substcont)
     /* update the taint state of various various variables in preparation
      * for calling the code block.
      * See "how taint works" above pp_subst() */
-    if (PL_tainting) {
+    if (TAINTING_get) {
 	if (RX_MATCH_TAINTED(rx)) /* run time pattern taint, eg locale */
 	    cx->sb_rxtainted |= SUBST_TAINT_PAT;
 
