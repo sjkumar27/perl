@@ -664,7 +664,7 @@ S_pm_description(pTHX_ const PMOP *pm)
 #endif
 
     if (regex) {
-        if (RX_EXTFLAGS(regex) & RXf_TAINTED)
+        if (RX_ISTAINTED(regex))
             sv_catpv(desc, ",TAINTED");
         if (RX_CHECK_SUBSTR(regex)) {
             if (!(RX_EXTFLAGS(regex) & RXf_NOSCAN))

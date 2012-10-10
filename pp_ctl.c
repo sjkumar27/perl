@@ -138,7 +138,7 @@ PP(pp_regcomp)
 	    SvGETMAGIC(lhs);
 	    /* Restore the previous value of PL_tainted (which may have been
 	       modified by get-magic), to avoid incorrectly setting the
-	       RXf_TAINTED flag further down. */
+	       RXf_TAINTED flag with RX_TAINT_on further down. */
 	    TAINT_set(was_tainted);
 	}
 	tmp = reg_temp_copy(NULL, new_re);
@@ -153,7 +153,7 @@ PP(pp_regcomp)
 #ifndef INCOMPLETE_TAINTS
     if (TAINTING_get && TAINT_get) {
 	SvTAINTED_on((SV*)new_re);
-	RX_EXTFLAGS(new_re) |= RXf_TAINTED;
+        RX_TAINT_on(new_re);
     }
 #endif
 
