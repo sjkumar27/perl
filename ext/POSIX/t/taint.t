@@ -8,7 +8,9 @@ BEGIN {
     }
 }
 
-use Test::More tests => 7;
+use Test::More (
+    ${^TAINT} ? (tests => 7) : (skip_all => "A perl without taint support")
+);
 use Scalar::Util qw/tainted/;
 
 

@@ -549,33 +549,37 @@ do_test('scalar with pos magic',
 # VMS is setting FAKE and READONLY flags.  What VMS uses for storing
 # ENV hashes is also not always null terminated.
 #
-do_test('tainted value in %ENV',
-        $ENV{PATH}=@ARGV,  # scalar(@ARGV) is a handy known tainted value
-'SV = PVMG\\($ADDR\\) at $ADDR
-  REFCNT = 1
-  FLAGS = \\(GMG,SMG,RMG(?:,POK)?(?:,pIOK)?,pPOK\\)
-  IV = 0
-  NV = 0
-  PV = $ADDR "0"\\\0
-  CUR = 1
-  LEN = \d+
-  MAGIC = $ADDR
-    MG_VIRTUAL = &PL_vtbl_envelem
-    MG_TYPE = PERL_MAGIC_envelem\\(e\\)
-(?:    MG_FLAGS = 0x01
-      TAINTEDDIR
-)?    MG_LEN = -?\d+
-    MG_PTR = $ADDR (?:"(?i:PATH)"|=> HEf_SVKEY
-    SV = PV(?:IV)?\\($ADDR\\) at $ADDR
-      REFCNT = \d+
-      FLAGS = \\(TEMP,POK,(?:FAKE,READONLY,)?pPOK\\)
-(?:      IV = 0
-)?      PV = $ADDR "(?i:PATH)"(?:\\\0)?
-      CUR = \d+
-      LEN = \d+)
-  MAGIC = $ADDR
-    MG_VIRTUAL = &PL_vtbl_taint
-    MG_TYPE = PERL_MAGIC_taint\\(t\\)');
+if (not ${^TAINT}) {
+}
+else {
+  do_test('tainted value in %ENV',
+          $ENV{PATH}=@ARGV,  # scalar(@ARGV) is a handy known tainted value
+  'SV = PVMG\\($ADDR\\) at $ADDR
+    REFCNT = 1
+    FLAGS = \\(GMG,SMG,RMG(?:,POK)?(?:,pIOK)?,pPOK\\)
+    IV = 0
+    NV = 0
+    PV = $ADDR "0"\\\0
+    CUR = 1
+    LEN = \d+
+    MAGIC = $ADDR
+      MG_VIRTUAL = &PL_vtbl_envelem
+      MG_TYPE = PERL_MAGIC_envelem\\(e\\)
+  (?:    MG_FLAGS = 0x01
+        TAINTEDDIR
+  )?    MG_LEN = -?\d+
+      MG_PTR = $ADDR (?:"(?i:PATH)"|=> HEf_SVKEY
+      SV = PV(?:IV)?\\($ADDR\\) at $ADDR
+        REFCNT = \d+
+        FLAGS = \\(TEMP,POK,(?:FAKE,READONLY,)?pPOK\\)
+  (?:      IV = 0
+  )?      PV = $ADDR "(?i:PATH)"(?:\\\0)?
+        CUR = \d+
+        LEN = \d+)
+    MAGIC = $ADDR
+      MG_VIRTUAL = &PL_vtbl_taint
+      MG_TYPE = PERL_MAGIC_taint\\(t\\)');
+}
 
 do_test('blessed reference',
 	bless(\\undef, 'Foobar'),

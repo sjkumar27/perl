@@ -6,6 +6,12 @@ my %Expect_Name = (); # what we expect for $File::Find::name/fullname
 my %Expect_Dir  = (); # what we expect for $File::Find::dir
 my ($cwd, $cwd_untainted);
 
+BEGIN {
+    if (not ${^TAINT}) {
+        require Test::More;
+        Test::More->import(skip_all => "A perl without taint support");
+    }
+}
 
 BEGIN {
     require File::Spec;
