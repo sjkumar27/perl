@@ -6743,10 +6743,14 @@ Perl_reg_numbered_buff_fetch(pTHX_ REGEXP * const r, const I32 paren,
     assert(s >= rx->subbeg);
     assert(rx->sublen >= (s - rx->subbeg) + i );
     if (i >= 0) {
+#if NO_TAINT_SUPPORT
+        sv_setpvn(sv, s, i);
+#else
         const int oldtainted = TAINT_get;
         TAINT_NOT;
         sv_setpvn(sv, s, i);
         TAINT_set(oldtainted);
+#endif
         if ( (rx->extflags & RXf_CANY_SEEN)
             ? (RXp_MATCH_UTF8(rx)
                         && (!i || is_utf8_string((U8*)s, i)))

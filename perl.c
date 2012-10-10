@@ -1832,8 +1832,11 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
 	    break;
 
 	case 't':
-#ifdef NO_TAINT_SUPPORT
-            Perl_warn("This perl was compiled without taint support. The -t and -T flags are no-ops.");
+#if SILENT_NO_TAINT_SUPPORT
+            /* silently ignore */
+#elif NO_TAINT_SUPPORT
+            Perl_croak("This perl was compiled without taint support. "
+                       "Cowardly refusing to run with -t or -T flags");
 #else
 	    CHECK_MALLOC_TOO_LATE_FOR('t');
 	    if( !TAINTING_get ) {
@@ -1844,8 +1847,11 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
 	    s++;
 	    goto reswitch;
 	case 'T':
-#ifdef NO_TAINT_SUPPORT
-            Perl_warn("This perl was compiled without taint support. The -t and -T flags are no-ops.");
+#if SILENT_NO_TAINT_SUPPORT
+            /* silently ignore */
+#elif NO_TAINT_SUPPORT
+            Perl_croak("This perl was compiled without taint support. "
+                       "Cowardly refusing to run with -t or -T flags");
 #else
 	    CHECK_MALLOC_TOO_LATE_FOR('T');
 	    TAINTING_set(TRUE);
@@ -1958,8 +1964,11 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
 	while (isSPACE(*s))
 	    s++;
 	if (*s == '-' && *(s+1) == 'T') {
-#ifdef NO_TAINT_SUPPORT
-            Perl_warn("This perl was compiled without taint support. The -t and -T flags are no-ops.");
+#if SILENT_NO_TAINT_SUPPORT
+            /* silently ignore */
+#elif NO_TAINT_SUPPORT
+            Perl_croak("This perl was compiled without taint support. "
+                       "Cowardly refusing to run with -t or -T flags");
 #else
 	    CHECK_MALLOC_TOO_LATE_FOR('T');
 	    TAINTING_set(TRUE);
@@ -1994,8 +2003,11 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
 		    }
 		}
 		if (*d == 't') {
-#ifdef NO_TAINT_SUPPORT
-                    Perl_warn("This perl was compiled without taint support. The -t and -T flags are no-ops.");
+#if SILENT_NO_TAINT_SUPPORT
+            /* silently ignore */
+#elif NO_TAINT_SUPPORT
+                    Perl_croak("This perl was compiled without taint support. "
+                               "Cowardly refusing to run with -t or -T flags");
 #else
 		    if( !TAINTING_get) {
 		        PL_taint_warn = TRUE;
@@ -3315,8 +3327,11 @@ Perl_moreswitches(pTHX_ const char *s)
 	return s;
     case 't':
     case 'T':
-#ifdef NO_TAINT_SUPPORT
-        Perl_warn("This perl was compiled without taint support. The -t and -T flags are no-ops.");
+#if SILENT_NO_TAINT_SUPPORT
+            /* silently ignore */
+#elif NO_TAINT_SUPPORT
+        Perl_croak("This perl was compiled without taint support. "
+                   "Cowardly refusing to run with -t or -T flags");
 #else
         if (!TAINTING_get)
 	    TOO_LATE_FOR(*s);
@@ -3807,6 +3822,9 @@ S_find_beginning(pTHX_ SV* linestr_sv, PerlIO *rsfp)
 STATIC void
 S_init_ids(pTHX)
 {
+    /* no need to do anything here any more if we don't
+     * do tainting. */
+#if !NO_TAINT_SUPPORT
     dVAR;
     const UV my_uid = PerlProc_getuid();
     const UV my_euid = PerlProc_geteuid();
@@ -3816,6 +3834,7 @@ S_init_ids(pTHX)
     /* Should not happen: */
     CHECK_MALLOC_TAINT(my_uid && (my_euid != my_uid || my_egid != my_gid));
     TAINTING_set( TAINTING_get | (my_uid && (my_euid != my_uid || my_egid != my_gid)) );
+#endif
     /* BUG */
     /* PSz 27 Feb 04
      * Should go by suidscript, not uid!=euid: why disallow

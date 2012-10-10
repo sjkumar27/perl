@@ -528,7 +528,19 @@ register struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 #   define VOL
 #endif
 
-#ifdef NO_TAINT_SUPPORT
+/* SILENT_NO_TAINT_SUPPORT implies NO_TAINT_SUPPORT.
+ * SILENT_NO_TAINT_SUPPORT is the same as NO_TAINT_SUPPORT except it
+ * silently ignores -t/-T instead of throwing an exception.
+ */
+#if SILENT_NO_TAINT_SUPPORT && !defined(NO_TAINT_SUPPORT)
+#  define NO_TAINT_SUPPORT 1
+#endif
+
+/* NO_TAINT_SUPPORT can be set to transform virtually all taint-related
+ * operations into no-ops for a very modest speed-up. Enable only if you
+ * know what you're doing: tests and CPAN modules' tests are bound to fail.
+ */
+#if NO_TAINT_SUPPORT
 #   define TAINT		NOOP
 #   define TAINT_NOT		NOOP
 #   define TAINT_IF(c)		NOOP

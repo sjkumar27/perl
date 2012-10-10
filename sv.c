@@ -12905,7 +12905,7 @@ perl_clone_using(PerlInterpreter *proto_perl, UV flags,
     PL_origargc		= proto_perl->Iorigargc;
     PL_origargv		= proto_perl->Iorigargv;
 
-#ifndef NO_TAINT_SUPPORT
+#if !NO_TAINT_SUPPORT
     /* Set tainting stuff before PerlIO_debug can possibly get called */
     PL_tainting		= proto_perl->Itainting;
 #else
@@ -13084,7 +13084,7 @@ perl_clone_using(PerlInterpreter *proto_perl, UV flags,
     PL_timesbuf		= proto_perl->Itimesbuf;
 #endif
 
-#ifndef NO_TAINT_SUPPORT
+#if !NO_TAINT_SUPPORT
     PL_tainted		= proto_perl->Itainted;
 #else
     PL_tainted          = FALSE;

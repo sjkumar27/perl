@@ -95,7 +95,7 @@ Perl_taint_env(pTHX)
     /* Don't bother if there's no *ENV glob */
     if (!PL_envgv)
 	return;
-    /* If there's no %ENV hash of if it's not magical, croak, because
+    /* If there's no %ENV hash or if it's not magical, croak, because
      * it probably doesn't reflect the actual environment */
     if (!GvHV(PL_envgv) || !(SvRMAGICAL(GvHV(PL_envgv))
 	    && mg_find((const SV *)GvHV(PL_envgv), PERL_MAGIC_env))) {
