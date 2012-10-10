@@ -61,11 +61,11 @@ Perl_taint_proper(pTHX_ const char *f, const char *const s)
 	    ug = " while running setuid";
 	else if (PerlProc_getgid() != PerlProc_getegid())
 	    ug = " while running setgid";
-	else if (PL_taint_warn)
+	else if (TAINT_WARN_get)
             ug = " while running with -t switch";
         else
 	    ug = " while running with -T switch";
-	if (PL_unsafe || PL_taint_warn) {
+	if (PL_unsafe || TAINT_WARN_get) {
 	    Perl_ck_warner_d(aTHX_ packWARN(WARN_TAINT), f, s, ug);
         }
         else {

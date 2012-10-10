@@ -1231,7 +1231,7 @@ perl_destruct(pTHXx)
     }
     nuke_stacks();
     TAINTING_set(FALSE);
-    PL_taint_warn = FALSE;
+    TAINT_WARN_set(FALSE);
     PL_hints = 0;		/* Reset hints. Should hints be per-interpreter ? */
     PL_debug = 0;
 
@@ -1840,7 +1840,7 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
 #else
 	    CHECK_MALLOC_TOO_LATE_FOR('t');
 	    if( !TAINTING_get ) {
-	         PL_taint_warn = TRUE;
+	         TAINT_WARN_set(TRUE);
 	         TAINTING_set(TRUE);
 	    }
 #endif
@@ -1855,7 +1855,7 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
 #else
 	    CHECK_MALLOC_TOO_LATE_FOR('T');
 	    TAINTING_set(TRUE);
-	    PL_taint_warn = FALSE;
+	    TAINT_WARN_set(FALSE);
 #endif
 	    s++;
 	    goto reswitch;
@@ -1972,7 +1972,7 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
 #else
 	    CHECK_MALLOC_TOO_LATE_FOR('T');
 	    TAINTING_set(TRUE);
-            PL_taint_warn = FALSE;
+            TAINT_WARN_set(FALSE);
 #endif
 	}
 	else {
@@ -2010,7 +2010,7 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
                                "Cowardly refusing to run with -t or -T flags");
 #else
 		    if( !TAINTING_get) {
-		        PL_taint_warn = TRUE;
+		        TAINT_WARN_set(TRUE);
 		        TAINTING_set(TRUE);
 		    }
 #endif

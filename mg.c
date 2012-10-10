@@ -880,7 +880,7 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
         }
 	else if (strEQ(remaining, "AINT"))
             sv_setiv(sv, TAINTING_get
-		    ? (PL_taint_warn || PL_unsafe ? -1 : 1)
+		    ? (TAINT_WARN_get || PL_unsafe ? -1 : 1)
 		    : 0);
         break;
     case '\025':		/* $^UNICODE, $^UTF8LOCALE, $^UTF8CACHE */

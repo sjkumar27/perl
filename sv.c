@@ -12908,10 +12908,11 @@ perl_clone_using(PerlInterpreter *proto_perl, UV flags,
 #if !NO_TAINT_SUPPORT
     /* Set tainting stuff before PerlIO_debug can possibly get called */
     PL_tainting		= proto_perl->Itainting;
+    PL_taint_warn	= proto_perl->Itaint_warn;
 #else
     PL_tainting         = FALSE;
+    PL_taint_warn	= FALSE;
 #endif
-    PL_taint_warn	= proto_perl->Itaint_warn;
 
     PL_minus_c		= proto_perl->Iminus_c;
 

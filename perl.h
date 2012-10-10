@@ -550,6 +550,8 @@ register struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 #   define TAINT_get		0
 #   define TAINTING_get		0
 #   define TAINTING_set(s)	NOOP
+#   define TAINT_WARN_get       0
+#   define TAINT_WARN_set(s)    NOOP
 #else
 #   define TAINT		(PL_tainted = TRUE)
 #   define TAINT_NOT	(PL_tainted = FALSE)
@@ -560,6 +562,8 @@ register struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 #   define TAINT_get		(PL_tainted)
 #   define TAINTING_get		(PL_tainting)
 #   define TAINTING_set(s)	(PL_tainting = (s))
+#   define TAINT_WARN_get       (PL_taint_warn)
+#   define TAINT_WARN_set(s)    (PL_taint_warn = (s))
 #endif
 
 /* flags used internally only within pp_subst and pp_substcont */
