@@ -101,10 +101,10 @@ const char* const non_utf8_target_but_utf8_required
 #define	STATIC	static
 #endif
 
-/* Valid for non-utf8 strings: avoids the reginclass
+/* Valid only for non-utf8 strings: avoids the reginclass
  * call if there are no complications: i.e., if everything matchable is
  * straight forward in the bitmap */
-#define REGINCLASS(prog,p,c)  (ANYOF_FLAGS(p) ? reginclass(prog,p,c,0)   \
+#define REGINCLASS(prog,p,c)  (ANYOF_FLAGS(p) ? reginclass(prog,p,c,c+1,0)   \
 					      : ANYOF_BITMAP_TEST(p,*(c)))
 
 /*
@@ -1366,12 +1366,12 @@ if ((!reginfo || regtry(reginfo, &s))) \
 	}                                                                      \
 	else {                                                                 \
 	    U8 * const r = reghop3((U8*)s, -1, (U8*)PL_bostr);                 \
-	    tmp = utf8n_to_uvchr(r, UTF8SKIP(r), 0, UTF8_ALLOW_DEFAULT);       \
+	    tmp = utf8n_to_uvchr(r, (U8*) PL_regeol - r, 0, UTF8_ALLOW_DEFAULT); \
 	}                                                                      \
 	tmp = TeSt1_UtF8;                                                      \
-	LOAD_UTF8_CHARCLASS_ALNUM();                                                                \
+	LOAD_UTF8_CHARCLASS_ALNUM();                                           \
 	REXEC_FBC_UTF8_SCAN(                                                   \
-	    if (tmp == ! (TeSt2_UtF8)) { \
+	    if (tmp == ! (TeSt2_UtF8)) {                                       \
 		tmp = !tmp;                                                    \
 		IF_SUCCESS;                                                    \
 	    }                                                                  \
@@ -1459,7 +1459,7 @@ S_find_byclass(pTHX_ regexp * prog, const regnode *c, char *s,
 	case ANYOF:
 	    if (utf8_target) {
 		REXEC_FBC_UTF8_CLASS_SCAN(
-                          reginclass(prog, c, (U8*)s, utf8_target));
+                          reginclass(prog, c, (U8*)s, (U8*) send, utf8_target));
 	    }
 	    else {
 		REXEC_FBC_CLASS_SCAN(REGINCLASS(prog, c, (U8*)s));
@@ -4249,7 +4249,7 @@ S_regmatch(pTHX_ regmatch_info *reginfo, char *startpos, regnode *prog)
 		else {
 		    const U8 * const r = reghop3((U8*)locinput, -1, (U8*)PL_bostr);
 
-		    ln = utf8n_to_uvchr(r, UTF8SKIP(r), 0, uniflags);
+		    ln = utf8n_to_uvchr(r, (U8*) PL_regeol - r, 0, uniflags);
 		}
 		if (FLAGS(scan) != REGEX_LOCALE_CHARSET) {
 		    ln = isALNUM_uni(ln);
@@ -4314,7 +4314,7 @@ S_regmatch(pTHX_ regmatch_info *reginfo, char *startpos, regnode *prog)
             if (NEXTCHR_IS_EOS)
                 sayNO;
 	    if (utf8_target) {
-	        if (!reginclass(rex, scan, (U8*)locinput, utf8_target))
+	        if (!reginclass(rex, scan, (U8*)locinput, (U8*)PL_regeol, utf8_target))
 		    sayNO;
 		locinput += UTF8SKIP(locinput);
 		break;
@@ -6763,7 +6763,7 @@ S_regrepeat(pTHX_ const regexp *prog, char **startposp, const regnode *p, I32 ma
 	    STRLEN inclasslen;
 	    while (hardcount < max
                    && scan + (inclasslen = UTF8SKIP(scan)) <= loceol
-		   && reginclass(prog, p, (U8*)scan, utf8_target))
+		   && reginclass(prog, p, (U8*)scan, (U8*)loceol, utf8_target))
 	    {
 		scan += inclasslen;
 		hardcount++;
@@ -7318,6 +7318,7 @@ S_core_regclass_swash(pTHX_ const regexp *prog, register const regnode* node, bo
  
   n is the ANYOF regnode
   p is the target string
+  p_end points to one byte beyond the end of the target string
   utf8_target tells whether p is in UTF-8.
 
   Returns true if matched; false otherwise.
@@ -7329,7 +7330,7 @@ S_core_regclass_swash(pTHX_ const regexp *prog, register const regnode* node, bo
  */
 
 STATIC bool
-S_reginclass(pTHX_ const regexp * const prog, register const regnode * const n, register const U8* const p, register const bool utf8_target)
+S_reginclass(pTHX_ const regexp * const prog, register const regnode * const n, register const U8* const p, const U8* const p_end, register const bool utf8_target)
 {
     dVAR;
     const char flags = ANYOF_FLAGS(n);
@@ -7341,7 +7342,7 @@ S_reginclass(pTHX_ const regexp * const prog, register const regnode * const n, 
     /* If c is not already the code point, get it */
     if (! UTF8_IS_INVARIANT(c) && utf8_target) {
         STRLEN c_len = 0;
-	c = utf8n_to_uvchr(p, UTF8_MAXBYTES, &c_len,
+	c = utf8n_to_uvchr(p, p_end - p, &c_len,
 		(UTF8_ALLOW_DEFAULT & UTF8_ALLOW_ANYUV)
 		| UTF8_ALLOW_FFFF | UTF8_CHECK_ONLY);
 		/* see [perl #37836] for UTF8_ALLOW_ANYUV; [perl #38293] for

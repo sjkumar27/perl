@@ -697,7 +697,8 @@ foreach my $test (sort { numerically } keys %tests) {
                                     : ($parend == 1)
                                         ? "(${rhs},?)"
                                         : "((${rhs})+,?)";
-                    foreach my $quantifier ("", '?', '*', '+', '{1,3}') {
+                    #foreach my $quantifier ("", '?', '*', '+', '{1,3}') {
+                    foreach my $quantifier ("", '?', '*', '+', '{1,3}', '??', '*?', '+?', '{1,3}?') {
 
                       # Perhaps should be TODOs, as are unimplemented, but
                       # maybe will never be implemented
@@ -705,7 +706,7 @@ foreach my $test (sort { numerically } keys %tests) {
 
                       # A ? or * quantifier normally causes the thing to be
                       # able to match a null string
-                      my $quantifier_can_match_null = $quantifier eq '?' || $quantifier eq '*';
+                      my $quantifier_can_match_null = $quantifier =~ /^[?*]/;
 
                       # But since we only quantify the last character in a
                       # multiple fold, the other characters will have width,
