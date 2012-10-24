@@ -7339,7 +7339,7 @@ S_reginclass(pTHX_ const regexp * const prog, register const regnode * const n, 
     PERL_ARGS_ASSERT_REGINCLASS;
 
     /* If c is not already the code point, get it */
-    if (utf8_target && !UTF8_IS_INVARIANT(c)) {
+    if (! UTF8_IS_INVARIANT(c) && utf8_target) {
         STRLEN c_len = 0;
 	c = utf8n_to_uvchr(p, UTF8_MAXBYTES, &c_len,
 		(UTF8_ALLOW_DEFAULT & UTF8_ALLOW_ANYUV)
